@@ -1,0 +1,15 @@
+name: 'sind cleanup'
+description: 'Show cluster status and delete all sind clusters'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Show cluster status
+      if: always()
+      shell: bash
+      run: sind status 2>&1 || true
+
+    - name: Delete clusters
+      if: always()
+      shell: bash
+      run: sind delete cluster --all 2>&1 || true

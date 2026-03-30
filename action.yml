@@ -1,0 +1,69 @@
+name: 'Setup sind'
+description: 'Install sind and create Slurm-in-Docker clusters for CI testing'
+branding:
+  icon: 'server'
+  color: 'blue'
+
+inputs:
+  version:
+    description: 'sind version to install (e.g., v0.1.0, or "latest")'
+    required: false
+    default: 'latest'
+  clusters:
+    description: |
+      YAML list of cluster definitions. Each entry is either a path to a sind
+      cluster config file, or an inline sind cluster config.
+      Example:
+        clusters: |
+          - cluster.yml
+          - kind: Cluster
+            name: dev
+            nodes:
+              - controller
+              - worker: 2
+    required: false
+    default: ''
+  pull:
+    description: 'Pull container images before creating clusters'
+    required: false
+    default: 'true'
+  realm:
+    description: 'sind realm for resource isolation (useful for parallel jobs)'
+    required: false
+    default: ''
+
+outputs:
+  clusters:
+    description: 'Comma-separated list of created cluster names'
+    value: ${{ steps.create.outputs.clusters }}
+  version:
+    description: 'Installed sind version'
+    value: ${{ steps.install.outputs.version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install sind
+      id: install
+      shell: bash
+      run: ${{ github.action_path }}/scripts/install.sh
+      env:
+        SIND_VERSION: ${{ inputs.version }}
+
+    - name: Check prerequisites
+      shell: bash
+      run: sind doctor
+
+    - name: Set realm
+      if: ${{ inputs.realm != '' }}
+      shell: bash
+      run: echo "SIND_REALM=${{ inputs.realm }}" >> "$GITHUB_ENV"
+
+    - name: Create clusters
+      id: create
+      if: ${{ inputs.clusters != '' }}
+      shell: bash
+      run: ${{ github.action_path }}/scripts/create.sh
+      env:
+        SIND_CLUSTERS: ${{ inputs.clusters }}
+        SIND_PULL: ${{ inputs.pull }}
