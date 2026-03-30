@@ -50,9 +50,18 @@ runs:
       env:
         SIND_VERSION: ${{ inputs.version }}
 
+    - name: Set verbosity
+      shell: bash
+      run: |
+        if [[ "${RUNNER_DEBUG:-0}" == "1" ]]; then
+          echo "SIND_VERBOSITY=-vvv" >> "$GITHUB_ENV"
+        else
+          echo "SIND_VERBOSITY=-v" >> "$GITHUB_ENV"
+        fi
+
     - name: Check prerequisites
       shell: bash
-      run: sind doctor
+      run: sind $SIND_VERBOSITY doctor
 
     - name: Set realm
       if: ${{ inputs.realm != '' }}

@@ -34,11 +34,13 @@ for ((i = 0; i < count; i++)); do
   [[ "${SIND_PULL:-false}" == "true" ]] && flags+=(--pull)
 
   echo "::group::Creating cluster from $label"
-  sind create cluster "${flags[@]}"
+  sind $SIND_VERBOSITY create cluster "${flags[@]}"
   echo "::endgroup::"
 
   # Extract cluster name
   name=$(yq '.name // "default"' "$config")
+
+  sind $SIND_VERBOSITY status "$name"
 
   if [[ -n "$clusters" ]]; then
     clusters="${clusters},${name}"
@@ -48,6 +50,9 @@ for ((i = 0; i < count; i++)); do
 done
 
 rm -f "$input_file"
+
+# Allow cluster services to fully settle
+sleep 5
 
 echo "clusters=${clusters}" >> "$GITHUB_OUTPUT"
 echo "Created clusters: ${clusters}"
