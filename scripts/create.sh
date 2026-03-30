@@ -51,8 +51,5 @@ done
 
 rm -f "$input_file"
 
-# Allow cluster services to fully settle
-sleep 5
-
 echo "clusters=${clusters}" >> "$GITHUB_OUTPUT"
 echo "Created clusters: ${clusters}"
