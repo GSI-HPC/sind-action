@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: shellcheck
+        run: shellcheck scripts/*.sh
+
+      - name: actionlint
+        uses: rhysd/actionlint@v1.7.11

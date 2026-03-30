@@ -10,7 +10,7 @@ jobs:
   slurm-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: GSI-HPC/sind-action@v1
         with:
@@ -82,7 +82,7 @@ jobs:
       matrix:
         suite: [unit, integration, e2e]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: GSI-HPC/sind-action@v1
         with:
