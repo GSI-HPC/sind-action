@@ -31,7 +31,7 @@ echo "${INSTALL_DIR}" >> "$GITHUB_PATH"
 export PATH="${INSTALL_DIR}:${PATH}"
 
 # Verify
-INSTALLED_VERSION=$("${INSTALL_DIR}/sind" --version)
+INSTALLED_VERSION=$("${INSTALL_DIR}/sind" version --json | jq -r '.version')
 echo "Installed sind ${INSTALLED_VERSION}"
 
 echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
