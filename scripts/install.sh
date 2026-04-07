@@ -13,6 +13,12 @@ if [[ "$VERSION" == "latest" ]]; then
   fi
 fi
 
+MIN_VERSION="v0.8.0"
+if [[ "$(printf '%s\n' "$MIN_VERSION" "$VERSION" | sort -V | head -n1)" != "$MIN_VERSION" ]]; then
+  echo "::error::sind ${VERSION} is not supported, minimum required version is ${MIN_VERSION}"
+  exit 1
+fi
+
 echo "Installing sind ${VERSION}..."
 
 DOWNLOAD_URL="https://github.com/GSI-HPC/sind/releases/download/${VERSION}/sind-linux-amd64"
