@@ -56,7 +56,11 @@ for ((i = 0; i < count; i++)); do
   [[ "${SIND_PULL:-false}" == "true" ]] && flags+=(--pull)
 
   echo "::group::Creating cluster from $label"
-  sind "$SIND_VERBOSITY" create cluster "${flags[@]}"
+  if ! sind "$SIND_VERBOSITY" create cluster "${flags[@]}"; then
+    echo "::endgroup::"
+    echo "::error::Failed to create cluster from $label"
+    exit 1
+  fi
   echo "::endgroup::"
 
   # Extract cluster name
