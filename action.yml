@@ -6,7 +6,7 @@ branding:
 
 inputs:
   version:
-    description: 'sind version to install (e.g., v0.1.0, or "latest")'
+    description: 'sind version to install (e.g., v0.9.0; minimum v0.8.0), or "latest"'
     required: false
     default: 'latest'
   clusters:

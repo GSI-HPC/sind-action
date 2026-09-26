@@ -10,7 +10,7 @@ jobs:
   slurm-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: GSI-HPC/sind-action@v2
         with:
@@ -30,7 +30,7 @@ jobs:
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `version` | sind version to install (e.g. `v0.1.0`) | `latest` |
+| `version` | sind version to install (e.g. `v0.9.0`; minimum `v0.8.0`) | `latest` |
 | `clusters` | YAML list of cluster definitions (see below) | — |
 | `pull` | Pull container images before creating | `true` |
 | `realm` | sind realm for resource isolation | — |
@@ -39,7 +39,8 @@ jobs:
 
 Each entry in `clusters` is either a **filepath** to a sind cluster config or
 an **inline** cluster config. Each entry creates one cluster via
-`sind create cluster --config <file>`.
+`sind create cluster --config <file>`, and the cluster's status is printed right
+after it is created.
 
 ```yaml
 clusters: |
@@ -67,8 +68,7 @@ Use the cleanup sub-action to tear down clusters after your tests:
   if: always()
 ```
 
-This deletes all clusters (within the configured `realm`, if one is set). The
-status of each cluster is printed right after it is created.
+This deletes all clusters (within the configured `realm`, if one is set).
 
 ## Parallel Jobs with Realm Isolation
 
@@ -82,7 +82,7 @@ jobs:
       matrix:
         suite: [unit, integration, e2e]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: GSI-HPC/sind-action@v2
         with:
