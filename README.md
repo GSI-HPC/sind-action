@@ -26,6 +26,16 @@ jobs:
         if: always()
 ```
 
+## Requirements
+
+- A Linux x64 runner, such as `ubuntu-latest`. sind publishes no binaries for
+  other platforms.
+- Docker and cgroup v2, which `sind doctor` checks before any cluster is
+  created.
+- `bash`, `curl`, `jq` and [mikefarah `yq`](https://github.com/mikefarah/yq) v4.
+
+GitHub's Ubuntu runners meet all of these.
+
 ## Inputs
 
 | Input | Description | Default |

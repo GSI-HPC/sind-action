@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The yq expressions below need mikefarah yq v4, not the Python yq wrapper.
+yq_version=$(yq --version 2>/dev/null || true)
+if [[ "$yq_version" != *mikefarah/yq*" v4."* ]]; then
+  echo "::error::mikefarah yq v4 (https://github.com/mikefarah/yq) is required, found: ${yq_version:-none}"
+  exit 1
+fi
+
 # Write input to temp file for yq to process
 input_file=$(mktemp --suffix=.yml)
 printf '%s\n' "$SIND_CLUSTERS" > "$input_file"

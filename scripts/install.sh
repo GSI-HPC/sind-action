@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# sind releases only a Linux x86-64 binary.
+if [[ "$(uname -s)/$(uname -m)" != "Linux/x86_64" ]]; then
+  echo "::error::sind runs only on Linux x64 runners, not on $(uname -s) $(uname -m)"
+  exit 1
+fi
+
 REPO_URL="https://github.com/GSI-HPC/sind"
 VERSION="${SIND_VERSION:-latest}"
 CURL_OPTS=(--fail --silent --show-error --location --retry 3 --retry-connrefused)
