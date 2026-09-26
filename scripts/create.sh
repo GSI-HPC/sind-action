@@ -8,8 +8,10 @@ if [[ "$yq_version" != *mikefarah/yq*" v4."* ]]; then
   exit 1
 fi
 
-# Write input to temp file for yq to process
-input_file=$(mktemp --suffix=.yml)
+# Temporary files: the input for yq and one config per inline cluster
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+input_file="${tmp_dir}/clusters.yml"
 printf '%s\n' "$SIND_CLUSTERS" > "$input_file"
 
 # `sind status` was replaced by `sind get cluster` in sind v0.9.0.
@@ -43,7 +45,7 @@ for ((i = 0; i < count; i++)); do
     label="$config"
   elif [[ "$item_kind" == "map" ]]; then
     # Entry is an inline sind config, write to temp file
-    config=$(mktemp --suffix=.yml)
+    config="${tmp_dir}/inline-${i}.yml"
     yq ".[$i]" "$input_file" > "$config"
     label="inline cluster $i"
   else
@@ -74,8 +76,6 @@ for ((i = 0; i < count; i++)); do
     clusters="$name"
   fi
 done
-
-rm -f "$input_file"
 
 echo "clusters=${clusters}" >> "$GITHUB_OUTPUT"
 echo "Created clusters: ${clusters}"
