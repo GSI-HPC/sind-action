@@ -17,6 +17,13 @@ if [[ "$VERSION" == "latest" ]]; then
   VERSION="${latest_url##*/}"
 fi
 
+# Release tags are vX.Y.Z; accept the version with or without the "v".
+if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+  echo "::error::Invalid sind version: ${VERSION} (expected e.g. v0.9.0 or latest)"
+  exit 1
+fi
+VERSION="v${VERSION#v}"
+
 MIN_VERSION="v0.8.0"
 if [[ "$(printf '%s\n' "$MIN_VERSION" "$VERSION" | sort -V | head -n1)" != "$MIN_VERSION" ]]; then
   echo "::error::sind ${VERSION} is not supported, minimum required version is ${MIN_VERSION}"
