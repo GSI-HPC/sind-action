@@ -28,8 +28,10 @@ jobs:
 
 ## Requirements
 
-- A Linux x64 runner, such as `ubuntu-latest`. sind publishes no binaries for
-  other platforms.
+- A Linux x64 or ARM64 runner, such as `ubuntu-latest` or `ubuntu-24.04-arm`.
+  The action installs the sind binary for the runner's architecture. ARM64
+  runners need a sind release after v0.9.0, the first with linux/arm64
+  binaries and node images.
 - Docker and cgroup v2, which `sind doctor` checks before any cluster is
   created.
 - `bash`, `curl`, `jq` and [mikefarah `yq`](https://github.com/mikefarah/yq) v4.
