@@ -1,0 +1,4 @@
+# Claude Code: shared skills under .claude/skills/ are tracked
+.claude/*
+!.claude/skills/
+CLAUDE.local.md
