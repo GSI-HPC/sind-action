@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: GSI-HPC/sind-action@v1
+      - uses: GSI-HPC/sind-action@v2
         with:
           clusters: |
             - test/cluster.yml
@@ -22,7 +22,7 @@ jobs:
           sind exec -- sinfo
           sind exec -- srun hostname
 
-      - uses: GSI-HPC/sind-action/cleanup@v1
+      - uses: GSI-HPC/sind-action/cleanup@v2
         if: always()
 ```
 
@@ -63,12 +63,12 @@ clusters: |
 Use the cleanup sub-action to tear down clusters after your tests:
 
 ```yaml
-- uses: GSI-HPC/sind-action/cleanup@v1
+- uses: GSI-HPC/sind-action/cleanup@v2
   if: always()
 ```
 
-This shows the cluster status (useful for debugging failures) and deletes all
-clusters.
+This deletes all clusters (within the configured `realm`, if one is set). The
+status of each cluster is printed right after it is created.
 
 ## Parallel Jobs with Realm Isolation
 
@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: GSI-HPC/sind-action@v1
+      - uses: GSI-HPC/sind-action@v2
         with:
           realm: ${{ matrix.suite }}
           clusters: |
@@ -92,7 +92,7 @@ jobs:
 
       - run: make test-${{ matrix.suite }}
 
-      - uses: GSI-HPC/sind-action/cleanup@v1
+      - uses: GSI-HPC/sind-action/cleanup@v2
         if: always()
 ```
 
