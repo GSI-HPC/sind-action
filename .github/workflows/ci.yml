@@ -16,3 +16,51 @@ jobs:
 
       - name: actionlint
         uses: rhysd/actionlint@v1.7.12
+
+  e2e:
+    name: e2e (sind ${{ matrix.version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported sind release and the newest one.
+        version: [v0.8.0, latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup sind
+        id: sind
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+          realm: e2e
+          clusters: |
+            - .github/e2e/cluster.yml
+            - kind: Cluster
+              name: inline
+              nodes:
+                - controller
+                - worker: 1
+
+      - name: Check outputs
+        env:
+          CLUSTERS: ${{ steps.sind.outputs.clusters }}
+          VERSION: ${{ steps.sind.outputs.version }}
+        run: |
+          [[ "$CLUSTERS" == "file,inline" ]]
+          [[ "$VERSION" == v* ]]
+
+      - name: Run Slurm jobs
+        run: |
+          sind exec file -- sinfo
+          sind exec file -- srun -N2 hostname
+          sind exec inline -- srun hostname
+
+      - name: Cleanup
+        if: always()
+        uses: ./cleanup
+
+      - name: Check cleanup
+        run: |
+          sind get clusters
+          [[ -z "$(sind get clusters | tail -n +2)" ]]

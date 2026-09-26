@@ -5,6 +5,14 @@ set -euo pipefail
 input_file=$(mktemp --suffix=.yml)
 echo "$SIND_CLUSTERS" > "$input_file"
 
+# `sind status` was replaced by `sind get cluster` in sind v0.9.0.
+sind_version=$(sind version --json | jq -r '.version')
+if [[ "$(printf '%s\n' 0.9.0 "$sind_version" | sort -V | head -n1)" == "0.9.0" ]]; then
+  status_cmd=(get cluster)
+else
+  status_cmd=(status)
+fi
+
 clusters=""
 count=$(yq 'length' "$input_file")
 
@@ -40,7 +48,7 @@ for ((i = 0; i < count; i++)); do
   # Extract cluster name
   name=$(yq '.name // "default"' "$config")
 
-  sind "$SIND_VERBOSITY" status "$name"
+  sind "$SIND_VERBOSITY" "${status_cmd[@]}" "$name"
 
   if [[ -n "$clusters" ]]; then
     clusters="${clusters},${name}"
