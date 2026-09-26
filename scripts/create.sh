@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Write input to temp file for yq to process
 input_file=$(mktemp --suffix=.yml)
-echo "$SIND_CLUSTERS" > "$input_file"
+printf '%s\n' "$SIND_CLUSTERS" > "$input_file"
 
 # `sind status` was replaced by `sind get cluster` in sind v0.9.0.
 sind_version=$(sind version --json | jq -r '.version')
@@ -11,6 +11,13 @@ if [[ "$(printf '%s\n' 0.9.0 "$sind_version" | sort -V | head -n1)" == "0.9.0" ]
   status_cmd=(get cluster)
 else
   status_cmd=(status)
+fi
+
+# An empty input creates no clusters; anything else must be a list.
+input_kind=$(yq 'kind' "$input_file")
+if [[ "$input_kind" != "seq" && "$(yq 'tag' "$input_file")" != "!!null" ]]; then
+  echo "::error::clusters must be a YAML list, with one '- ' entry per cluster (got a ${input_kind})"
+  exit 1
 fi
 
 clusters=""
