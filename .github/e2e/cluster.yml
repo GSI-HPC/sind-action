@@ -1,0 +1,5 @@
+kind: Cluster
+name: file
+nodes:
+  - controller
+  - worker: 2
