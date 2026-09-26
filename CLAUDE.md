@@ -9,8 +9,9 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
 - `action.yml`: install (`scripts/install.sh`), then set `SIND_VERBOSITY` (`-v`, or
   `-vvv` under `RUNNER_DEBUG`), run `sind doctor`, export `SIND_REALM` from the `realm`
   input, and create clusters (`scripts/create.sh`). Outputs: `clusters`, `version`.
-- `scripts/install.sh`: resolves `latest` via the GitHub API, enforces `MIN_VERSION`,
-  downloads `sind-linux-amd64` into `~/.local/bin`, and checks `sind version --json`.
+- `scripts/install.sh`: resolves `latest` from the redirect of the latest release page
+  (not the rate-limited API), enforces `MIN_VERSION`, downloads `sind-linux-amd64` into
+  `~/.local/bin`, and checks `sind version --json`.
 - `scripts/create.sh`: each `clusters` entry is a config file path (scalar) or an inline
   config (map). It creates each cluster, prints its status, and writes the `clusters`
   output.

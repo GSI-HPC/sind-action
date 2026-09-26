@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+REPO_URL="https://github.com/GSI-HPC/sind"
 VERSION="${SIND_VERSION:-latest}"
+CURL_OPTS=(--fail --silent --show-error --location --retry 3 --retry-connrefused)
 
-# Resolve latest version from GitHub releases
+# Resolve latest from the redirect of the latest release page. The GitHub API
+# allows only 60 unauthenticated requests per hour per IP address.
 if [[ "$VERSION" == "latest" ]]; then
   echo "Resolving latest sind version..."
-  VERSION=$(curl -fsSL "https://api.github.com/repos/GSI-HPC/sind/releases/latest" | jq -r '.tag_name')
-  if [[ -z "$VERSION" || "$VERSION" == "null" ]]; then
+  if ! latest_url=$(curl "${CURL_OPTS[@]}" --head --output /dev/null --write-out '%{url_effective}' "${REPO_URL}/releases/latest") ||
+    [[ "$latest_url" != "${REPO_URL}/releases/tag/"* ]]; then
     echo "::error::Failed to resolve latest sind version"
     exit 1
   fi
+  VERSION="${latest_url##*/}"
 fi
 
 MIN_VERSION="v0.8.0"
@@ -21,11 +25,11 @@ fi
 
 echo "Installing sind ${VERSION}..."
 
-DOWNLOAD_URL="https://github.com/GSI-HPC/sind/releases/download/${VERSION}/sind-linux-amd64"
+DOWNLOAD_URL="${REPO_URL}/releases/download/${VERSION}/sind-linux-amd64"
 INSTALL_DIR="${HOME}/.local/bin"
 mkdir -p "$INSTALL_DIR"
 
-if ! curl -fsSL "$DOWNLOAD_URL" -o "${INSTALL_DIR}/sind"; then
+if ! curl "${CURL_OPTS[@]}" --output "${INSTALL_DIR}/sind" "$DOWNLOAD_URL"; then
   echo "::error::Failed to download sind ${VERSION} from ${DOWNLOAD_URL}"
   exit 1
 fi
