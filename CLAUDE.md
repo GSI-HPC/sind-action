@@ -15,7 +15,8 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
 - `scripts/create.sh`: each `clusters` entry is a config file path (scalar) or an inline
   config (map). It creates each cluster, prints its status, and writes the `clusters`
   output.
-- `cleanup/action.yml`: `sind delete cluster --all` (in `SIND_REALM`, if set).
+- `cleanup/action.yml`: `sind delete cluster --all` (in `SIND_REALM`, if set); a failure
+  is a warning, so cleanup never fails the job.
 - `.github/workflows/ci.yml`: `lint` (shellcheck, actionlint) and `e2e`, which runs the
   action from the checkout against the oldest supported sind release and `latest`.
 
