@@ -106,6 +106,43 @@ jobs:
         if: always()
 ```
 
+## Slurm Versions
+
+Clusters use sind's default node image, `ghcr.io/gsi-hpc/sind-node:latest`, which
+carries the newest supported Slurm release line. sind also publishes an image per
+supported release line, tagged `<YY>.<MM>` (e.g. `25.11`). To pin a release line,
+or test against several, set the image in the cluster config:
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        slurm: ['25.11', '26.05']
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: GSI-HPC/sind-action@v2
+        with:
+          clusters: |
+            - kind: Cluster
+              name: dev
+              defaults:
+                image: ghcr.io/gsi-hpc/sind-node:${{ matrix.slurm }}
+              nodes:
+                - controller
+                - worker: 2
+
+      - run: sind exec dev -- srun -N2 hostname
+
+      - uses: GSI-HPC/sind-action/cleanup@v2
+        if: always()
+```
+
+See [Official images](https://gsi-hpc.github.io/sind/container-images/building-images/#official-images)
+for the available tags.
+
 ## AI disclosure
 
 This project is developed with the help of AI coding tools. Since September 2026,
