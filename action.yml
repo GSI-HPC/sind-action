@@ -46,7 +46,7 @@ runs:
     - name: Install sind
       id: install
       shell: bash
-      run: ${{ github.action_path }}/scripts/install.sh
+      run: bash "$GITHUB_ACTION_PATH/scripts/install.sh"
       env:
         SIND_VERSION: ${{ inputs.version }}
 
@@ -66,13 +66,20 @@ runs:
     - name: Set realm
       if: ${{ inputs.realm != '' }}
       shell: bash
-      run: echo "SIND_REALM=${{ inputs.realm }}" >> "$GITHUB_ENV"
+      run: |
+        if [[ "$REALM" =~ [[:cntrl:]] ]]; then
+          echo "::error::realm must not contain control characters such as newlines"
+          exit 1
+        fi
+        echo "SIND_REALM=${REALM}" >> "$GITHUB_ENV"
+      env:
+        REALM: ${{ inputs.realm }}
 
     - name: Create clusters
       id: create
       if: ${{ inputs.clusters != '' }}
       shell: bash
-      run: ${{ github.action_path }}/scripts/create.sh
+      run: bash "$GITHUB_ACTION_PATH/scripts/create.sh"
       env:
         SIND_CLUSTERS: ${{ inputs.clusters }}
         SIND_PULL: ${{ inputs.pull }}
