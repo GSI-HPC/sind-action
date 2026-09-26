@@ -7,4 +7,7 @@ runs:
     - name: Delete clusters
       if: always()
       shell: bash
-      run: sind $SIND_VERBOSITY delete cluster --all 2>&1 || true
+      run: |
+        if ! sind $SIND_VERBOSITY delete cluster --all 2>&1; then
+          echo "::warning::sind delete cluster --all failed, some clusters may be left behind"
+        fi

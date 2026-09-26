@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Write input to temp file for yq to process
-input_file=$(mktemp --suffix=.yml)
-echo "$SIND_CLUSTERS" > "$input_file"
+# The yq expressions below need mikefarah yq v4, not the Python yq wrapper.
+yq_version=$(yq --version 2>/dev/null || true)
+if [[ "$yq_version" != *mikefarah/yq*" v4."* ]]; then
+  echo "::error::mikefarah yq v4 (https://github.com/mikefarah/yq) is required, found: ${yq_version:-none}"
+  exit 1
+fi
+
+# Temporary files: the input for yq and one config per inline cluster
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+input_file="${tmp_dir}/clusters.yml"
+printf '%s\n' "$SIND_CLUSTERS" > "$input_file"
 
 # `sind status` was replaced by `sind get cluster` in sind v0.9.0.
 sind_version=$(sind version --json | jq -r '.version')
@@ -11,6 +20,13 @@ if [[ "$(printf '%s\n' 0.9.0 "$sind_version" | sort -V | head -n1)" == "0.9.0" ]
   status_cmd=(get cluster)
 else
   status_cmd=(status)
+fi
+
+# An empty input creates no clusters; anything else must be a list.
+input_kind=$(yq 'kind' "$input_file")
+if [[ "$input_kind" != "seq" && "$(yq 'tag' "$input_file")" != "!!null" ]]; then
+  echo "::error::clusters must be a YAML list, with one '- ' entry per cluster (got a ${input_kind})"
+  exit 1
 fi
 
 clusters=""
@@ -29,7 +45,7 @@ for ((i = 0; i < count; i++)); do
     label="$config"
   elif [[ "$item_kind" == "map" ]]; then
     # Entry is an inline sind config, write to temp file
-    config=$(mktemp --suffix=.yml)
+    config="${tmp_dir}/inline-${i}.yml"
     yq ".[$i]" "$input_file" > "$config"
     label="inline cluster $i"
   else
@@ -42,7 +58,11 @@ for ((i = 0; i < count; i++)); do
   [[ "${SIND_PULL:-false}" == "true" ]] && flags+=(--pull)
 
   echo "::group::Creating cluster from $label"
-  sind "$SIND_VERBOSITY" create cluster "${flags[@]}"
+  if ! sind "$SIND_VERBOSITY" create cluster "${flags[@]}"; then
+    echo "::endgroup::"
+    echo "::error::Failed to create cluster from $label"
+    exit 1
+  fi
   echo "::endgroup::"
 
   # Extract cluster name
@@ -56,8 +76,6 @@ for ((i = 0; i < count; i++)); do
     clusters="$name"
   fi
 done
-
-rm -f "$input_file"
 
 echo "clusters=${clusters}" >> "$GITHUB_OUTPUT"
 echo "Created clusters: ${clusters}"
