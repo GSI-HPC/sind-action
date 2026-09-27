@@ -45,7 +45,7 @@ GitHub's Ubuntu runners meet all of these.
 | `version` | sind version to install (e.g. `v0.9.0`; minimum `v0.8.0`) | `latest` |
 | `clusters` | YAML list of cluster definitions (see below) | — |
 | `pull` | Pull container images before creating | `true` |
-| `realm` | sind realm for resource isolation | — |
+| `realm` | sind realm for resource isolation (a DNS label, see below) | — |
 
 ### Cluster definitions
 
@@ -84,7 +84,11 @@ This deletes all clusters (within the configured `realm`, if one is set).
 
 ## Parallel Jobs with Realm Isolation
 
-Use `realm` to isolate clusters when running multiple jobs on the same runner:
+Use `realm` to isolate clusters when running multiple jobs on the same runner.
+A realm name must be a single DNS label: lowercase letters, digits and `-`, 1 to
+63 characters, not beginning or ending with `-`. sind releases after v0.9.0 reject
+other names, such as `Unit`, `unit_tests` or `ubuntu-24.04`, so pick matrix values
+that fit or map them to a valid name.
 
 ```yaml
 jobs:

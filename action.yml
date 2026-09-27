@@ -28,7 +28,7 @@ inputs:
     required: false
     default: 'true'
   realm:
-    description: 'sind realm for resource isolation (useful for parallel jobs)'
+    description: 'sind realm for resource isolation (useful for parallel jobs); a DNS label: lowercase letters, digits and "-"'
     required: false
     default: ''
 
