@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# sind releases only a Linux x86-64 binary.
-if [[ "$(uname -s)/$(uname -m)" != "Linux/x86_64" ]]; then
-  echo "::error::sind runs only on Linux x64 runners, not on $(uname -s) $(uname -m)"
-  exit 1
-fi
+# sind releases Linux binaries for x86-64 and, after v0.9.0, arm64.
+case "$(uname -s)/$(uname -m)" in
+  Linux/x86_64) ARCH=amd64 ;;
+  Linux/aarch64 | Linux/arm64) ARCH=arm64 ;;
+  *)
+    echo "::error::sind runs only on Linux x64 and ARM64 runners, not on $(uname -s) $(uname -m)"
+    exit 1
+    ;;
+esac
 
 REPO_URL="https://github.com/GSI-HPC/sind"
 VERSION="${SIND_VERSION:-latest}"
@@ -36,9 +40,16 @@ if [[ "$(printf '%s\n' "$MIN_VERSION" "$VERSION" | sort -V | head -n1)" != "$MIN
   exit 1
 fi
 
-echo "Installing sind ${VERSION}..."
+# v0.9.0 and earlier publish only sind-linux-amd64.
+LAST_AMD64_ONLY="v0.9.0"
+if [[ "$ARCH" == "arm64" && "$(printf '%s\n' "$LAST_AMD64_ONLY" "$VERSION" | sort -V | tail -n1)" == "$LAST_AMD64_ONLY" ]]; then
+  echo "::error::sind ${VERSION} has no linux/arm64 binary; ARM64 runners need a sind release after ${LAST_AMD64_ONLY}"
+  exit 1
+fi
 
-DOWNLOAD_URL="${REPO_URL}/releases/download/${VERSION}/sind-linux-amd64"
+echo "Installing sind ${VERSION} (linux/${ARCH})..."
+
+DOWNLOAD_URL="${REPO_URL}/releases/download/${VERSION}/sind-linux-${ARCH}"
 INSTALL_DIR="${HOME}/.local/bin"
 mkdir -p "$INSTALL_DIR"
 

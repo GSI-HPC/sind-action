@@ -28,8 +28,10 @@ jobs:
 
 ## Requirements
 
-- A Linux x64 runner, such as `ubuntu-latest`. sind publishes no binaries for
-  other platforms.
+- A Linux x64 or ARM64 runner, such as `ubuntu-latest` or `ubuntu-24.04-arm`.
+  The action installs the sind binary for the runner's architecture. ARM64
+  runners need a sind release after v0.9.0, the first with linux/arm64
+  binaries and node images.
 - Docker and cgroup v2, which `sind doctor` checks before any cluster is
   created.
 - `bash`, `curl`, `jq` and [mikefarah `yq`](https://github.com/mikefarah/yq) v4.
@@ -105,6 +107,43 @@ jobs:
       - uses: GSI-HPC/sind-action/cleanup@v2
         if: always()
 ```
+
+## Slurm Versions
+
+Clusters use sind's default node image, `ghcr.io/gsi-hpc/sind-node:latest`, which
+carries the newest supported Slurm release line. sind also publishes an image per
+supported release line, tagged `<YY>.<MM>` (e.g. `25.11`). To pin a release line,
+or test against several, set the image in the cluster config:
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        slurm: ['25.11', '26.05']
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: GSI-HPC/sind-action@v2
+        with:
+          clusters: |
+            - kind: Cluster
+              name: dev
+              defaults:
+                image: ghcr.io/gsi-hpc/sind-node:${{ matrix.slurm }}
+              nodes:
+                - controller
+                - worker: 2
+
+      - run: sind exec dev -- srun -N2 hostname
+
+      - uses: GSI-HPC/sind-action/cleanup@v2
+        if: always()
+```
+
+See [Official images](https://gsi-hpc.github.io/sind/container-images/building-images/#official-images)
+for the available tags.
 
 ## AI disclosure
 
