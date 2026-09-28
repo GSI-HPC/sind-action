@@ -30,7 +30,7 @@ jobs:
 
 - A Linux x64 or ARM64 runner, such as `ubuntu-latest` or `ubuntu-24.04-arm`.
   The action installs the sind binary for the runner's architecture. ARM64
-  runners need a sind release after v0.9.0, the first with linux/arm64
+  runners need sind v0.10.0 or later, the first release with linux/arm64
   binaries and node images.
 - Docker and cgroup v2, which `sind doctor` checks before any cluster is
   created.
@@ -86,7 +86,7 @@ This deletes all clusters (within the configured `realm`, if one is set).
 
 Use `realm` to isolate clusters when running multiple jobs on the same runner.
 A realm name must be a single DNS label: lowercase letters, digits and `-`, 1 to
-63 characters, not beginning or ending with `-`. sind releases after v0.9.0 reject
+63 characters, not beginning or ending with `-`. sind v0.10.0 and later reject
 other names, such as `Unit`, `unit_tests` or `ubuntu-24.04`, so pick matrix values
 that fit or map them to a valid name.
 
