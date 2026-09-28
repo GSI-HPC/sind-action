@@ -19,7 +19,8 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
 - `cleanup/action.yml`: `sind delete cluster --all` (in `SIND_REALM`, if set); a failure
   is a warning, so cleanup never fails the job.
 - `.github/workflows/ci.yml`: `lint` (shellcheck, actionlint) and `e2e`, which runs the
-  action from the checkout against the oldest supported sind release and `latest`.
+  action from the checkout against the oldest supported sind release and `latest`, and
+  against `latest` on an ARM64 runner.
 
 ## Checks
 
@@ -37,7 +38,7 @@ actionlint                # go install github.com/rhysd/actionlint/cmd/actionlin
 ## sind compatibility
 
 - The action supports sind >= `MIN_VERSION` (`scripts/install.sh`). Keep the `e2e`
-  matrix on `MIN_VERSION` and `latest`.
+  matrix on `MIN_VERSION` and `latest`, plus `latest` on ARM64.
 - When the sind CLI changes (e.g. `sind status` became `sind get cluster` in v0.9.0),
   select the command from `sind version --json` instead of raising `MIN_VERSION`.
   Raising `MIN_VERSION` or breaking an input or output is a new major version.

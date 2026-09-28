@@ -41,9 +41,10 @@ Rebase onto `main`, never merge `main` in:
 
 - `lint`: shellcheck and actionlint.
 - `e2e`: runs the action from the checkout (`uses: ./`) for the oldest supported sind
-  and `latest`. It creates a file-based and an inline cluster in a realm, checks the
-  outputs, runs `sinfo`/`srun`, and verifies cleanup. Read the "Setup sind" step log to
-  confirm the post-create status printed a cluster table, not help text.
+  and `latest`, and for `latest` on `ubuntu-24.04-arm`. It creates a file-based and an
+  inline cluster in a realm, checks the outputs, runs `sinfo`/`srun`, and verifies
+  cleanup. Read the "Setup sind" step log to confirm the post-create status printed a
+  cluster table, not help text.
 - A failure while downloading sind, or pulling the node image from ghcr.io, with a
   network error is upstream. Re-run once and report it if it repeats. Anything else is
   this PR's to fix. Never drop a matrix entry or a check to get green.

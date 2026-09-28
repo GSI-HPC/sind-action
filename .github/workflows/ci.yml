@@ -21,13 +21,18 @@ jobs:
         uses: rhysd/actionlint@v1.7.12
 
   e2e:
-    name: e2e (sind ${{ matrix.version }})
-    runs-on: ubuntu-latest
+    name: e2e (sind ${{ matrix.version }}${{ matrix.runner != 'ubuntu-latest' && format(', {0}', matrix.runner) || '' }})
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         # Oldest supported sind release and the newest one.
         version: [v0.8.0, latest]
+        runner: [ubuntu-latest]
+        include:
+          # The newest release on ARM64, which needs sind v0.10.0 or later.
+          - version: latest
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
 
