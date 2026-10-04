@@ -69,6 +69,8 @@ runs:
         SIND_VERSION: ${{ inputs.version }}
         SIND_VERIFY: ${{ inputs.verify }}
         GH_TOKEN: ${{ inputs.token }}
+        # The attestations live on github.com, even on GitHub Enterprise Server.
+        GH_HOST: github.com
 
     - name: Set verbosity
       shell: bash

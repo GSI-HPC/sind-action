@@ -62,9 +62,18 @@ if [[ "$(printf '%s\n' "$FIRST_ATTESTED" "$VERSION" | sort -V | head -n1)" == "$
   attested=true
 fi
 
-if [[ "$attested" == "true" && "$VERIFY" == "true" ]] && ! command -v gh >/dev/null; then
-  echo "::error::Verifying the sind binary's attestation needs the GitHub CLI (gh); install it, or set the input verify: false to skip this check"
-  exit 1
+# gh 2.93.0 fixes a token leak to TUF mirrors (GHSA-8xvp-7hj6-mcj9).
+MIN_GH_VERSION="2.93.0"
+if [[ "$attested" == "true" && "$VERIFY" == "true" ]]; then
+  if ! command -v gh >/dev/null; then
+    echo "::error::Verifying the sind binary's attestation needs the GitHub CLI (gh) ${MIN_GH_VERSION} or later; install it, or set the input verify: false to skip this check"
+    exit 1
+  fi
+  gh_version=$(gh --version | sed -n 's/^gh version \([0-9][0-9.]*\).*/\1/p')
+  if [[ -z "$gh_version" || "$(printf '%s\n' "$MIN_GH_VERSION" "$gh_version" | sort -V | head -n1)" != "$MIN_GH_VERSION" ]]; then
+    echo "::error::Verifying the sind binary's attestation needs the GitHub CLI (gh) ${MIN_GH_VERSION} or later, found ${gh_version:-an unknown version}; update it, or set the input verify: false to skip this check"
+    exit 1
+  fi
 fi
 
 echo "Installing sind ${VERSION} (linux/${ARCH})..."
@@ -102,11 +111,15 @@ if [[ "$attested" == "true" ]]; then
   echo "Checksum of ${ASSET} matches checksums.txt"
 
   # The attestation proves that sind's release workflow built the binary
-  # from the release tag, on a GitHub-hosted runner.
+  # from the release tag, on a GitHub-hosted runner. --cert-identity matches
+  # the signing certificate's identity exactly; gh before 2.102.0 matches
+  # --signer-workflow as a prefix and --source-ref case-insensitively
+  # (GHSA-wjmr-j3rp-mh2g, GHSA-4mq3-hpgx-9cx8). The identity holds the tag
+  # because release.yml runs on the tag push, not as a reusable workflow.
   if [[ "$VERIFY" == "true" ]]; then
     echo "Verifying the build provenance attestation of ${ASSET}..."
     if ! gh attestation verify "$binary" --repo "$REPO" \
-      --signer-workflow "${REPO}/.github/workflows/release.yml" \
+      --cert-identity "${REPO_URL}/.github/workflows/release.yml@refs/tags/${VERSION}" \
       --source-ref "refs/tags/${VERSION}" --deny-self-hosted-runners; then
       echo "::error::Failed to verify the build provenance attestation of ${ASSET} of sind ${VERSION}; sind was not installed"
       exit 1

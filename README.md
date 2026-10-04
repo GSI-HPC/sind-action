@@ -35,8 +35,9 @@ jobs:
 - A rootful Docker daemon (not rootless or userns-remap) on unified cgroup v2,
   which `sind doctor` checks before any cluster is created.
 - `bash`, `curl`, `jq` and [mikefarah `yq`](https://github.com/mikefarah/yq) v4.
-- The [GitHub CLI](https://cli.github.com/) `gh`, which verifies the sind
-  binary's build provenance attestation (see [Binary verification](#binary-verification)).
+- The [GitHub CLI](https://cli.github.com/) `gh` 2.93.0 or later, which
+  verifies the sind binary's build provenance attestation (see
+  [Binary verification](#binary-verification)).
 
 GitHub's Ubuntu runners meet all of these.
 
@@ -63,7 +64,10 @@ it only once it passes these checks, for sind v0.10.0 and later:
   that sind's release workflow (`.github/workflows/release.yml`) built it from
   the release tag on a GitHub-hosted runner. The action checks this with
   `gh attestation verify` and `token`; the default `github.token` needs no extra
-  permissions to read the public sind repository's attestations.
+  permissions to read the public sind repository's attestations. gh contacts
+  `api.github.com` and Sigstore's trust roots (`tuf-repo-cdn.sigstore.dev`,
+  `tuf-repo.github.com`), so runners with an egress allowlist must allow them.
+  On GitHub Enterprise Server, pass a github.com token as `token`.
 
 sind v0.9.0 and older publish neither, so the action installs them unverified
 and says so in a notice. On runners without `gh`, such as some self-hosted ones,
