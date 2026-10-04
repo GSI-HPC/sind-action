@@ -32,8 +32,8 @@ jobs:
   The action installs the sind binary for the runner's architecture. ARM64
   runners need sind v0.10.0 or later, the first release with linux/arm64
   binaries and node images.
-- Docker and cgroup v2, which `sind doctor` checks before any cluster is
-  created.
+- A rootful Docker daemon (not rootless or userns-remap) on unified cgroup v2,
+  which `sind doctor` checks before any cluster is created.
 - `bash`, `curl`, `jq` and [mikefarah `yq`](https://github.com/mikefarah/yq) v4.
 - The [GitHub CLI](https://cli.github.com/) `gh`, which verifies the sind
   binary's build provenance attestation (see [Binary verification](#binary-verification)).
@@ -156,10 +156,26 @@ jobs:
 
 ## Slurm Versions
 
-Clusters use sind's default node image, `ghcr.io/gsi-hpc/sind-node:latest`, which
-carries the newest supported Slurm release line. sind also publishes an image per
-supported release line, tagged `<YY>.<MM>` (e.g. `25.11`). To pin a release line,
-or test against several, set the image in the cluster config:
+Clusters whose config sets no `defaults.image` use sind's default node image:
+
+- sind releases after v0.10.0 default to the image published for that release,
+  `ghcr.io/gsi-hpc/sind-node:vX.Y.Z`, which carries the newest Slurm release
+  line at the time of that release. Pinning `version` therefore also pins the
+  Slurm version, and `version: latest` follows the newest sind release and its
+  image.
+- sind v0.10.0 and older default to `ghcr.io/gsi-hpc/sind-node:latest`.
+
+sind also publishes an image per supported Slurm release line:
+
+- `<YY>.<MM>` (e.g. `25.11`) moves: built from sind's `main`, it follows the
+  newest Slurm release of that line.
+- `vX.Y.Z-<YY>.<MM>` (e.g. `vX.Y.Z-25.11`) is fixed per sind release (after
+  v0.10.0): its Slurm version stays the same.
+
+With `pull: true`, the default, every run fetches the current image behind a
+moving tag such as `latest` or `<YY>.<MM>`.
+
+To test against several release lines, set the image in the cluster config:
 
 ```yaml
 jobs:
@@ -186,6 +202,24 @@ jobs:
 
       - uses: GSI-HPC/sind-action/cleanup@v2
         if: always()
+```
+
+The `<YY>.<MM>` tags move, so a later run may test a newer Slurm release of the
+same line. For reproducible runs with a sind release after v0.10.0, pin
+`version` and use that release's fixed tags:
+
+```yaml
+- uses: GSI-HPC/sind-action@v2
+  with:
+    version: vX.Y.Z
+    clusters: |
+      - kind: Cluster
+        name: dev
+        defaults:
+          image: ghcr.io/gsi-hpc/sind-node:vX.Y.Z-${{ matrix.slurm }}
+        nodes:
+          - controller
+          - worker: 2
 ```
 
 See [Official images](https://gsi-hpc.github.io/sind/container-images/building-images/#official-images)
