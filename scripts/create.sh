@@ -22,6 +22,16 @@ else
   status_cmd=(status)
 fi
 
+# `sind create cluster --wait` came after sind v0.10.0; sind validates the value.
+wait_flags=()
+if [[ -n "${SIND_WAIT:-}" ]]; then
+  if [[ "$(printf '%s\n' 0.10.0 "$sind_version" | sort -V | tail -n1)" != "0.10.0" ]]; then
+    wait_flags=(--wait "$SIND_WAIT")
+  else
+    echo "::warning::The wait input needs a sind release after v0.10.0 and is ignored with sind ${sind_version}"
+  fi
+fi
+
 # An empty input creates no clusters; anything else must be a list.
 input_kind=$(yq 'kind' "$input_file")
 if [[ "$input_kind" != "seq" && "$(yq 'tag' "$input_file")" != "!!null" ]]; then
@@ -54,7 +64,7 @@ for ((i = 0; i < count; i++)); do
   fi
 
   # Build command flags
-  flags=(--config "$config")
+  flags=(--config "$config" "${wait_flags[@]}")
   [[ "${SIND_PULL:-false}" == "true" ]] && flags+=(--pull)
 
   echo "::group::Creating cluster from $label"

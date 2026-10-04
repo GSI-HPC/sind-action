@@ -11,9 +11,16 @@ case "$(uname -s)/$(uname -m)" in
     ;;
 esac
 
-REPO_URL="https://github.com/GSI-HPC/sind"
+REPO="GSI-HPC/sind"
+REPO_URL="https://github.com/${REPO}"
 VERSION="${SIND_VERSION:-latest}"
+VERIFY="${SIND_VERIFY:-true}"
 CURL_OPTS=(--fail --silent --show-error --location --retry 3 --retry-connrefused)
+
+if [[ "$VERIFY" != "true" && "$VERIFY" != "false" ]]; then
+  echo "::error::verify must be true or false, got: ${VERIFY}"
+  exit 1
+fi
 
 # Resolve latest from the redirect of the latest release page. The GitHub API
 # allows only 60 unauthenticated requests per hour per IP address.
@@ -47,18 +54,86 @@ if [[ "$ARCH" == "arm64" && "$(printf '%s\n' "$LAST_AMD64_ONLY" "$VERSION" | sor
   exit 1
 fi
 
+# v0.10.0 and later publish checksums.txt and a build provenance attestation
+# for each binary; older releases have neither.
+FIRST_ATTESTED="v0.10.0"
+attested=false
+if [[ "$(printf '%s\n' "$FIRST_ATTESTED" "$VERSION" | sort -V | head -n1)" == "$FIRST_ATTESTED" ]]; then
+  attested=true
+fi
+
+# gh 2.93.0 fixes a token leak to TUF mirrors (GHSA-8xvp-7hj6-mcj9).
+MIN_GH_VERSION="2.93.0"
+if [[ "$attested" == "true" && "$VERIFY" == "true" ]]; then
+  if ! command -v gh >/dev/null; then
+    echo "::error::Verifying the sind binary's attestation needs the GitHub CLI (gh) ${MIN_GH_VERSION} or later; install it, or set the input verify: false to skip this check"
+    exit 1
+  fi
+  gh_version=$(gh --version | sed -n 's/^gh version \([0-9][0-9.]*\).*/\1/p')
+  if [[ -z "$gh_version" || "$(printf '%s\n' "$MIN_GH_VERSION" "$gh_version" | sort -V | head -n1)" != "$MIN_GH_VERSION" ]]; then
+    echo "::error::Verifying the sind binary's attestation needs the GitHub CLI (gh) ${MIN_GH_VERSION} or later, found ${gh_version:-an unknown version}; update it, or set the input verify: false to skip this check"
+    exit 1
+  fi
+fi
+
 echo "Installing sind ${VERSION} (linux/${ARCH})..."
 
-DOWNLOAD_URL="${REPO_URL}/releases/download/${VERSION}/sind-linux-${ARCH}"
-INSTALL_DIR="${HOME}/.local/bin"
-mkdir -p "$INSTALL_DIR"
+ASSET="sind-linux-${ARCH}"
+DOWNLOAD_URL="${REPO_URL}/releases/download/${VERSION}"
 
-if ! curl "${CURL_OPTS[@]}" --output "${INSTALL_DIR}/sind" "$DOWNLOAD_URL"; then
-  echo "::error::Failed to download sind ${VERSION} from ${DOWNLOAD_URL}"
+# Download and verify in a temporary directory; only a verified binary is
+# installed or run.
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+binary="${tmp_dir}/${ASSET}"
+
+if ! curl "${CURL_OPTS[@]}" --output "$binary" "${DOWNLOAD_URL}/${ASSET}"; then
+  echo "::error::Failed to download sind ${VERSION} from ${DOWNLOAD_URL}/${ASSET}"
   exit 1
 fi
 
-chmod +x "${INSTALL_DIR}/sind"
+if [[ "$attested" == "true" ]]; then
+  # The checksum catches a truncated or corrupted download.
+  if ! curl "${CURL_OPTS[@]}" --output "${tmp_dir}/checksums.txt" "${DOWNLOAD_URL}/checksums.txt"; then
+    echo "::error::Failed to download the checksums of sind ${VERSION} from ${DOWNLOAD_URL}/checksums.txt"
+    exit 1
+  fi
+  expected=$(awk -v name="$ASSET" '$2 == name { print $1 }' "${tmp_dir}/checksums.txt")
+  if [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]]; then
+    echo "::error::checksums.txt of sind ${VERSION} has no single sha256 checksum for ${ASSET}"
+    exit 1
+  fi
+  actual=$(sha256sum "$binary" | cut -d ' ' -f 1)
+  if [[ "$actual" != "$expected" ]]; then
+    echo "::error::Checksum mismatch for ${ASSET} of sind ${VERSION}: expected ${expected}, got ${actual}; sind was not installed"
+    exit 1
+  fi
+  echo "Checksum of ${ASSET} matches checksums.txt"
+
+  # The attestation proves that sind's release workflow built the binary
+  # from the release tag, on a GitHub-hosted runner. --cert-identity matches
+  # the signing certificate's identity exactly; gh before 2.102.0 matches
+  # --signer-workflow as a prefix and --source-ref case-insensitively
+  # (GHSA-wjmr-j3rp-mh2g, GHSA-4mq3-hpgx-9cx8). The identity holds the tag
+  # because release.yml runs on the tag push, not as a reusable workflow.
+  if [[ "$VERIFY" == "true" ]]; then
+    echo "Verifying the build provenance attestation of ${ASSET}..."
+    if ! gh attestation verify "$binary" --repo "$REPO" \
+      --cert-identity "${REPO_URL}/.github/workflows/release.yml@refs/tags/${VERSION}" \
+      --source-ref "refs/tags/${VERSION}" --deny-self-hosted-runners; then
+      echo "::error::Failed to verify the build provenance attestation of ${ASSET} of sind ${VERSION}; sind was not installed"
+      exit 1
+    fi
+  else
+    echo "::notice::Skipping the attestation check of sind ${VERSION} (verify: false)"
+  fi
+else
+  echo "::notice::sind ${VERSION} has no checksums or attestations (sind ${FIRST_ATTESTED} and later have them); installing it unverified"
+fi
+
+INSTALL_DIR="${HOME}/.local/bin"
+mkdir -p "$INSTALL_DIR"
+install -m 755 "$binary" "${INSTALL_DIR}/sind"
 
 # Make sind available in subsequent steps
 echo "${INSTALL_DIR}" >> "$GITHUB_PATH"

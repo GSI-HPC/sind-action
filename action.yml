@@ -9,6 +9,17 @@ inputs:
     description: 'sind version to install (e.g., v0.9.0; minimum v0.8.0), or "latest"'
     required: false
     default: 'latest'
+  verify:
+    description: |
+      Verify the build provenance attestation of the sind binary (sind v0.10.0
+      and later) with the GitHub CLI (gh). Set to "false" on runners without
+      gh; the binary's checksum is checked either way.
+    required: false
+    default: 'true'
+  token:
+    description: 'GitHub token for gh to read the attestations of the public sind repository'
+    required: false
+    default: ${{ github.token }}
   clusters:
     description: |
       YAML list of cluster definitions. Each entry is either a path to a sind
@@ -27,6 +38,13 @@ inputs:
     description: 'Pull container images before creating clusters'
     required: false
     default: 'true'
+  wait:
+    description: |
+      How long `sind create cluster` waits for the nodes and Slurm, e.g. "10m",
+      or "0" for no limit; image pulls don't count. Empty uses sind's default.
+      Needs a sind release after v0.10.0; older ones ignore it with a warning.
+    required: false
+    default: ''
   realm:
     description: 'sind realm for resource isolation (useful for parallel jobs); a DNS label: lowercase letters, digits and "-"'
     required: false
@@ -49,6 +67,10 @@ runs:
       run: bash "$GITHUB_ACTION_PATH/scripts/install.sh"
       env:
         SIND_VERSION: ${{ inputs.version }}
+        SIND_VERIFY: ${{ inputs.verify }}
+        GH_TOKEN: ${{ inputs.token }}
+        # The attestations live on github.com, even on GitHub Enterprise Server.
+        GH_HOST: github.com
 
     - name: Set verbosity
       shell: bash
@@ -83,3 +105,4 @@ runs:
       env:
         SIND_CLUSTERS: ${{ inputs.clusters }}
         SIND_PULL: ${{ inputs.pull }}
+        SIND_WAIT: ${{ inputs.wait }}

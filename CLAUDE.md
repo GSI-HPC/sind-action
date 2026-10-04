@@ -11,16 +11,20 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
   input, and create clusters (`scripts/create.sh`). Outputs: `clusters`, `version`.
 - `scripts/install.sh`: resolves `latest` from the redirect of the latest release page
   (not the rate-limited API), enforces `MIN_VERSION`, downloads `sind-linux-amd64` (or
-  `sind-linux-arm64` on ARM64 runners, sind releases after v0.9.0) into `~/.local/bin`,
-  and checks `sind version --json`.
+  `sind-linux-arm64` on ARM64 runners, sind releases after v0.9.0) into a temp dir,
+  verifies it (sind v0.10.0 and later: `checksums.txt`, and with the `verify` input
+  `gh attestation verify` using `GH_TOKEN` from the `token` input), and only then
+  installs it into `~/.local/bin` and checks `sind version --json`.
 - `scripts/create.sh`: each `clusters` entry is a config file path (scalar) or an inline
-  config (map). It creates each cluster, prints its status, and writes the `clusters`
-  output.
+  config (map). It creates each cluster (with `--wait` from the `wait` input on sind
+  releases after v0.10.0, a warning on older ones), prints its status, and writes the
+  `clusters` output.
 - `cleanup/action.yml`: `sind delete cluster --all` (in `SIND_REALM`, if set); a failure
   is a warning, so cleanup never fails the job.
 - `.github/workflows/ci.yml`: `lint` (shellcheck, actionlint) and `e2e`, which runs the
   action from the checkout against the oldest supported sind release and `latest`, and
-  against `latest` on an ARM64 runner.
+  against `latest` on an ARM64 runner. On `latest` it also checks that `install.sh`
+  rejects a binary with one byte changed.
 
 ## Checks
 
