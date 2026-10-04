@@ -58,6 +58,67 @@ jobs:
           [[ "$CLUSTERS" == "file,inline" ]]
           [[ "$VERSION" == v* ]]
 
+      # Runs install.sh again with a curl that flips one byte of the
+      # downloaded binary: the checksum check must reject it, even with
+      # verify: false, and with checksums.txt rewritten to match, the
+      # attestation check must. sind v0.8.0 has neither to check.
+      - name: Check that a modified binary is rejected
+        if: matrix.version == 'latest'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIND_VERSION: ${{ steps.sind.outputs.version }}
+        run: |
+          gh --version
+          stub=$(mktemp -d)
+          REAL_CURL=$(command -v curl)
+          export REAL_CURL
+          cat > "$stub/curl" <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          "$REAL_CURL" "$@"
+          out=
+          while (($#)); do
+            [[ "$1" == --output ]] && out=$2
+            shift
+          done
+          case "$out" in
+            */sind-linux-*)
+              byte=$(od -An -tu1 -j4096 -N1 "$out")
+              printf "\\$(printf '%03o' $((byte ^ 1)))" |
+                dd of="$out" bs=1 seek=4096 count=1 conv=notrunc status=none
+              ;;
+            */checksums.txt)
+              if [[ "${MATCH_CHECKSUM:-}" == true ]]; then
+                (cd "${out%/*}" && sha256sum sind-linux-*) > "$out"
+              fi
+              ;;
+          esac
+          EOF
+          chmod +x "$stub/curl"
+
+          installed=$(sha256sum ~/.local/bin/sind)
+          expect_rejected() { # expected error, env for install.sh
+            local want=$1
+            shift
+            if env PATH="$stub:$PATH" GITHUB_OUTPUT=/dev/null GITHUB_PATH=/dev/null "$@" \
+              bash scripts/install.sh > "$stub/log" 2>&1; then
+              cat "$stub/log"
+              echo "::error::install.sh installed a modified binary"
+              exit 1
+            fi
+            # Show the expected errors without turning them into annotations.
+            echo "::stop-commands::expected-failure"
+            cat "$stub/log"
+            echo "::expected-failure::"
+            if ! grep -q "$want" "$stub/log"; then
+              echo "::error::install.sh failed, but not with: ${want}"
+              exit 1
+            fi
+          }
+          expect_rejected "Checksum mismatch" SIND_VERIFY=false
+          expect_rejected "Failed to verify the build provenance attestation" MATCH_CHECKSUM=true
+          [[ "$(sha256sum ~/.local/bin/sind)" == "$installed" ]]
+
       - name: Run Slurm jobs
         run: |
           sind exec file -- sinfo

@@ -9,6 +9,17 @@ inputs:
     description: 'sind version to install (e.g., v0.9.0; minimum v0.8.0), or "latest"'
     required: false
     default: 'latest'
+  verify:
+    description: |
+      Verify the build provenance attestation of the sind binary (sind v0.10.0
+      and later) with the GitHub CLI (gh). Set to "false" on runners without
+      gh; the binary's checksum is checked either way.
+    required: false
+    default: 'true'
+  token:
+    description: 'GitHub token for gh to read the attestations of the public sind repository'
+    required: false
+    default: ${{ github.token }}
   clusters:
     description: |
       YAML list of cluster definitions. Each entry is either a path to a sind
@@ -49,6 +60,8 @@ runs:
       run: bash "$GITHUB_ACTION_PATH/scripts/install.sh"
       env:
         SIND_VERSION: ${{ inputs.version }}
+        SIND_VERIFY: ${{ inputs.verify }}
+        GH_TOKEN: ${{ inputs.token }}
 
     - name: Set verbosity
       shell: bash

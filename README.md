@@ -35,6 +35,8 @@ jobs:
 - Docker and cgroup v2, which `sind doctor` checks before any cluster is
   created.
 - `bash`, `curl`, `jq` and [mikefarah `yq`](https://github.com/mikefarah/yq) v4.
+- The [GitHub CLI](https://cli.github.com/) `gh`, which verifies the sind
+  binary's build provenance attestation (see [Binary verification](#binary-verification)).
 
 GitHub's Ubuntu runners meet all of these.
 
@@ -43,9 +45,28 @@ GitHub's Ubuntu runners meet all of these.
 | Input | Description | Default |
 |-------|-------------|---------|
 | `version` | sind version to install (e.g. `v0.9.0`; minimum `v0.8.0`) | `latest` |
+| `verify` | Verify the sind binary's build provenance attestation with `gh` (see below) | `true` |
+| `token` | GitHub token for `gh` to read the attestations of the public sind repository | `github.token` |
 | `clusters` | YAML list of cluster definitions (see below) | — |
 | `pull` | Pull container images before creating | `true` |
 | `realm` | sind realm for resource isolation (a DNS label, see below) | — |
+
+### Binary verification
+
+The action downloads the sind binary into a temporary directory and installs
+it only once it passes these checks, for sind v0.10.0 and later:
+
+- Its sha256 checksum must match the release's `checksums.txt`, which catches a
+  truncated or corrupted download.
+- With `verify: true`, the default, its build provenance attestation must show
+  that sind's release workflow (`.github/workflows/release.yml`) built it from
+  the release tag on a GitHub-hosted runner. The action checks this with
+  `gh attestation verify` and `token`; the default `github.token` needs no extra
+  permissions to read the public sind repository's attestations.
+
+sind v0.9.0 and older publish neither, so the action installs them unverified
+and says so in a notice. On runners without `gh`, such as some self-hosted ones,
+set `verify: false` to keep only the checksum check.
 
 ### Cluster definitions
 
