@@ -42,6 +42,8 @@ jobs:
         with:
           version: ${{ matrix.version }}
           realm: e2e
+          # sind v0.10.0 and older ignore wait with a warning.
+          wait: 10m
           clusters: |
             - .github/e2e/cluster.yml
             - kind: Cluster

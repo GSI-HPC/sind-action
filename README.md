@@ -49,6 +49,7 @@ GitHub's Ubuntu runners meet all of these.
 | `token` | GitHub token for `gh` to read the attestations of the public sind repository | `github.token` |
 | `clusters` | YAML list of cluster definitions (see below) | — |
 | `pull` | Pull container images before creating | `true` |
+| `wait` | How long `sind create cluster` waits for the nodes and Slurm, e.g. `10m`, or `0` for no limit (see below) | sind's default |
 | `realm` | sind realm for resource isolation (a DNS label, see below) | — |
 
 ### Binary verification
@@ -84,6 +85,26 @@ clusters: |
       - controller
       - worker: 3
 ```
+
+### Wait limit
+
+`wait` limits how long `sind create cluster` waits for each cluster to become
+ready: for the node checks and the Slurm daemons and, for a cluster with
+accounting, for its registration with slurmdbd. The limit counts from when the
+node containers have started, so image pulls don't count. When it expires, sind
+removes the partly created cluster again and the step fails. Leave `wait` empty
+for sind's default, or set `0` for no limit.
+
+```yaml
+- uses: GSI-HPC/sind-action@v2
+  with:
+    wait: 10m
+    clusters: |
+      - test/cluster.yml
+```
+
+`sind create cluster --wait` needs a sind release after v0.10.0. With older
+ones, the action ignores `wait` with a warning.
 
 ## Outputs
 

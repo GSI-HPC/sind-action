@@ -16,8 +16,9 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
   `gh attestation verify` using `GH_TOKEN` from the `token` input), and only then
   installs it into `~/.local/bin` and checks `sind version --json`.
 - `scripts/create.sh`: each `clusters` entry is a config file path (scalar) or an inline
-  config (map). It creates each cluster, prints its status, and writes the `clusters`
-  output.
+  config (map). It creates each cluster (with `--wait` from the `wait` input on sind
+  releases after v0.10.0, a warning on older ones), prints its status, and writes the
+  `clusters` output.
 - `cleanup/action.yml`: `sind delete cluster --all` (in `SIND_REALM`, if set); a failure
   is a warning, so cleanup never fails the job.
 - `.github/workflows/ci.yml`: `lint` (shellcheck, actionlint) and `e2e`, which runs the

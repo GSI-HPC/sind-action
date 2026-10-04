@@ -38,6 +38,13 @@ inputs:
     description: 'Pull container images before creating clusters'
     required: false
     default: 'true'
+  wait:
+    description: |
+      How long `sind create cluster` waits for the nodes and Slurm, e.g. "10m",
+      or "0" for no limit; image pulls don't count. Empty uses sind's default.
+      Needs a sind release after v0.10.0; older ones ignore it with a warning.
+    required: false
+    default: ''
   realm:
     description: 'sind realm for resource isolation (useful for parallel jobs); a DNS label: lowercase letters, digits and "-"'
     required: false
@@ -96,3 +103,4 @@ runs:
       env:
         SIND_CLUSTERS: ${{ inputs.clusters }}
         SIND_PULL: ${{ inputs.pull }}
+        SIND_WAIT: ${{ inputs.wait }}
