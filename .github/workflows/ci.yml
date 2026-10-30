@@ -23,6 +23,10 @@ jobs:
   e2e:
     name: e2e (sind ${{ matrix.version }}${{ matrix.runner != 'ubuntu-latest' && format(', {0}', matrix.runner) || '' }})
     runs-on: ${{ matrix.runner }}
+    # The clusters keep the names of their configs, whatever the job's
+    # SIND_CLUSTER, which newer sind releases read, says.
+    env:
+      SIND_CLUSTER: not-a-config-name
     strategy:
       fail-fast: false
       matrix:

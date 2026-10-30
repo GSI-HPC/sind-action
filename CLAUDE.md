@@ -16,9 +16,10 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
   `gh attestation verify` using `GH_TOKEN` from the `token` input), and only then
   installs it into `~/.local/bin` and checks `sind version --json`.
 - `scripts/create.sh`: each `clusters` entry is a config file path (scalar) or an inline
-  config (map). It creates each cluster (with `--wait` from the `wait` input on sind
-  releases after v0.10.0, a warning on older ones), prints its status, and writes the
-  `clusters` output.
+  config (map). It creates each cluster by the name of its config (`.name`, else
+  `default`), with `--pull` or `--pull=false` from the `pull` input and `--wait` from
+  the `wait` input on sind releases after v0.10.0 (a warning on older ones), prints its
+  status, and writes the `clusters` output.
 - `cleanup/action.yml`: `sind delete cluster --all` (in `SIND_REALM`, if set); a failure
   is a warning, so cleanup never fails the job.
 - `.github/workflows/ci.yml`: `lint` (shellcheck, actionlint) and `e2e`, which runs the
@@ -43,6 +44,10 @@ actionlint                # go install github.com/rhysd/actionlint/cmd/actionlin
 
 - The action supports sind >= `MIN_VERSION` (`scripts/install.sh`). Keep the `e2e`
   matrix on `MIN_VERSION` and `latest`, plus `latest` on ARM64.
+- sind reads `SIND_*` variables in place of its flags and arguments, such as
+  `SIND_PULL` for `--pull`. Pass the inputs to `create.sh` as `INPUT_*`, and name the
+  cluster and `--pull` on the command line, so that the job's own variables do not
+  change them.
 - When the sind CLI changes (e.g. `sind status` became `sind get cluster` in v0.9.0),
   select the command from `sind version --json` instead of raising `MIN_VERSION`.
   Raising `MIN_VERSION` or breaking an input or output is a new major version.
