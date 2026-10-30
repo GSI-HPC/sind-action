@@ -63,20 +63,27 @@ for ((i = 0; i < count; i++)); do
     exit 1
   fi
 
-  # Build command flags
+  if ! name=$(yq '.name // "default"' "$config"); then
+    echo "::error::Failed to read the cluster name from $label"
+    exit 1
+  fi
+
+  # The command line names the cluster and the pull, so that a SIND_CLUSTER
+  # or SIND_PULL of the job does not change them.
   flags=(--config "$config" "${wait_flags[@]}")
-  [[ "${INPUT_PULL:-false}" == "true" ]] && flags+=(--pull)
+  if [[ "${INPUT_PULL:-false}" == "true" ]]; then
+    flags+=(--pull)
+  else
+    flags+=(--pull=false)
+  fi
 
   echo "::group::Creating cluster from $label"
-  if ! sind "$SIND_VERBOSITY" create cluster "${flags[@]}"; then
+  if ! sind "$SIND_VERBOSITY" create cluster "$name" "${flags[@]}"; then
     echo "::endgroup::"
     echo "::error::Failed to create cluster from $label"
     exit 1
   fi
   echo "::endgroup::"
-
-  # Extract cluster name
-  name=$(yq '.name // "default"' "$config")
 
   sind "$SIND_VERBOSITY" "${status_cmd[@]}" "$name"
 
