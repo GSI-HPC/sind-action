@@ -103,6 +103,8 @@ runs:
       shell: bash
       run: bash "$GITHUB_ACTION_PATH/scripts/create.sh"
       env:
-        SIND_CLUSTERS: ${{ inputs.clusters }}
-        SIND_PULL: ${{ inputs.pull }}
-        SIND_WAIT: ${{ inputs.wait }}
+        # Not SIND_*: sind reads SIND_PULL and SIND_WAIT as its --pull and
+        # --wait, and these would hide the job's own.
+        INPUT_CLUSTERS: ${{ inputs.clusters }}
+        INPUT_PULL: ${{ inputs.pull }}
+        INPUT_WAIT: ${{ inputs.wait }}

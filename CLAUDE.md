@@ -43,6 +43,8 @@ actionlint                # go install github.com/rhysd/actionlint/cmd/actionlin
 
 - The action supports sind >= `MIN_VERSION` (`scripts/install.sh`). Keep the `e2e`
   matrix on `MIN_VERSION` and `latest`, plus `latest` on ARM64.
+- sind reads `SIND_*` variables in place of its flags and arguments, such as
+  `SIND_PULL` for `--pull`. Pass the inputs to `create.sh` as `INPUT_*`.
 - When the sind CLI changes (e.g. `sind status` became `sind get cluster` in v0.9.0),
   select the command from `sind version --json` instead of raising `MIN_VERSION`.
   Raising `MIN_VERSION` or breaking an input or output is a new major version.

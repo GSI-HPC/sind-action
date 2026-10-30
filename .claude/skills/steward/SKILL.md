@@ -21,7 +21,7 @@ description: Drive a sind-action pull request to a mergeable state. Covers local
    EOF
    chmod +x "$T/sind"
    PATH="$T:$PATH" SIND_VERBOSITY=-v GITHUB_OUTPUT="$T/out" \
-     SIND_CLUSTERS='- kind: Cluster
+     INPUT_CLUSTERS='- kind: Cluster
      name: c1
      nodes: [controller]' bash scripts/create.sh
    ```

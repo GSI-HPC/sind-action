@@ -12,7 +12,7 @@ fi
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
 input_file="${tmp_dir}/clusters.yml"
-printf '%s\n' "$SIND_CLUSTERS" > "$input_file"
+printf '%s\n' "$INPUT_CLUSTERS" > "$input_file"
 
 # `sind status` was replaced by `sind get cluster` in sind v0.9.0.
 sind_version=$(sind version --json | jq -r '.version')
@@ -24,9 +24,9 @@ fi
 
 # `sind create cluster --wait` came after sind v0.10.0; sind validates the value.
 wait_flags=()
-if [[ -n "${SIND_WAIT:-}" ]]; then
+if [[ -n "${INPUT_WAIT:-}" ]]; then
   if [[ "$(printf '%s\n' 0.10.0 "$sind_version" | sort -V | tail -n1)" != "0.10.0" ]]; then
-    wait_flags=(--wait "$SIND_WAIT")
+    wait_flags=(--wait "$INPUT_WAIT")
   else
     echo "::warning::The wait input needs a sind release after v0.10.0 and is ignored with sind ${sind_version}"
   fi
@@ -65,7 +65,7 @@ for ((i = 0; i < count; i++)); do
 
   # Build command flags
   flags=(--config "$config" "${wait_flags[@]}")
-  [[ "${SIND_PULL:-false}" == "true" ]] && flags+=(--pull)
+  [[ "${INPUT_PULL:-false}" == "true" ]] && flags+=(--pull)
 
   echo "::group::Creating cluster from $label"
   if ! sind "$SIND_VERBOSITY" create cluster "${flags[@]}"; then
