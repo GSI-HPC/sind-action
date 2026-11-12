@@ -7,7 +7,8 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
 ## Layout
 
 - `action.yml`: install (`scripts/install.sh`), then set `SIND_VERBOSITY` (`-v`, or
-  `-vvv` under `RUNNER_DEBUG`), run `sind doctor`, export `SIND_REALM` from the `realm`
+  `-vvv` under `RUNNER_DEBUG`), raise `fs.inotify.max_user_instances` to 8192 with
+  `sudo` (a warning without it), run `sind doctor`, export `SIND_REALM` from the `realm`
   input, and create clusters (`scripts/create.sh`). Outputs: `clusters`, `version`.
 - `scripts/install.sh`: resolves `latest` from the redirect of the latest release page
   (not the rate-limited API), enforces `MIN_VERSION`, downloads `sind-linux-amd64` (or

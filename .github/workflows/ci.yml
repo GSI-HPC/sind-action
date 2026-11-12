@@ -56,6 +56,9 @@ jobs:
                 - controller
                 - worker: 1
 
+      - name: Check the inotify instance limit
+        run: (( $(cat /proc/sys/fs/inotify/max_user_instances) >= 8192 ))
+
       - name: Check outputs
         env:
           CLUSTERS: ${{ steps.sind.outputs.clusters }}
