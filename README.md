@@ -34,6 +34,9 @@ jobs:
   binaries and node images.
 - A rootful Docker daemon (not rootless or userns-remap) on unified cgroup v2,
   which `sind doctor` checks before any cluster is created.
+- `sudo` without a password, so that the action can raise the runner's
+  `fs.inotify.max_user_instances` to 8192, as clusters of 10 or more nodes
+  need. The action never lowers it. Without `sudo`, it warns and goes on.
 - `bash`, `curl`, `jq` and [mikefarah `yq`](https://github.com/mikefarah/yq) v4.
 - The [GitHub CLI](https://cli.github.com/) `gh` 2.93.0 or later, which
   verifies the sind binary's build provenance attestation (see

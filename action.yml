@@ -81,6 +81,22 @@ runs:
           echo "SIND_VERBOSITY=-v" >> "$GITHUB_ENV"
         fi
 
+    # The Ubuntu 26.04 runner image allows 128 inotify instances per user.
+    # Clusters of about 10 or more nodes use them up: systemd in the next
+    # node container then fails to start, and the container exits with 255.
+    - name: Raise the inotify instance limit
+      shell: bash
+      run: |
+        want=8192
+        have=$(cat /proc/sys/fs/inotify/max_user_instances)
+        if (( have < want )); then
+          if sudo -n sysctl -q -w "fs.inotify.max_user_instances=$want"; then
+            echo "Raised fs.inotify.max_user_instances from $have to $want"
+          else
+            echo "::warning::Cannot raise fs.inotify.max_user_instances from $have without sudo; clusters of 10 or more nodes can fail to start"
+          fi
+        fi
+
     - name: Check prerequisites
       shell: bash
       run: sind $SIND_VERBOSITY doctor
