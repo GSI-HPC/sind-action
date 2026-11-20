@@ -23,23 +23,31 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
   status, and writes the `clusters` output.
 - `cleanup/action.yml`: `sind delete cluster --all` (in `SIND_REALM`, if set); a failure
   is a warning, so cleanup never fails the job.
-- `.github/workflows/ci.yml`: `lint` (shellcheck, actionlint) and `e2e`, which runs the
-  action from the checkout against the oldest supported sind release and `latest`, and
-  against `latest` on an ARM64 runner. On `latest` it also checks that `install.sh`
-  rejects a binary with one byte changed.
+- `tests/create.sh`, `tests/install.sh`: tests of the two scripts with stubs of `sind`,
+  `curl`, `gh` and `uname` on `PATH` (`tests/lib.sh` has the helpers). Each `test_*`
+  function runs the script in a directory of its own and compares the commands it ran,
+  its output and its exit status.
+- `.github/workflows/ci.yml`: `lint` (shellcheck, actionlint), `test` (the script
+  tests) and `e2e`, which runs the action from the checkout against the oldest
+  supported sind release and `latest`, and against `latest` on an ARM64 runner. On
+  `latest` it also checks that `install.sh` rejects a binary with one byte changed.
 
 ## Checks
 
 ```bash
-shellcheck scripts/*.sh   # pip install shellcheck-py if missing
-actionlint                # go install github.com/rhysd/actionlint/cmd/actionlint@latest
+shellcheck -x scripts/*.sh tests/*.sh # pip install shellcheck-py if missing
+actionlint                            # go install github.com/rhysd/actionlint/cmd/actionlint@latest
+tests/create.sh && tests/install.sh   # one test: tests/create.sh test_wait
 ```
 
 - Scripts run on GitHub's Ubuntu runners with bash, curl, jq and mikefarah `yq` v4.
   Some images ship the Python `yq` wrapper instead, which has different syntax. Test
   locally with the Go one.
-- Cloud sessions have no Docker daemon. Test script logic against a stub `sind` on
-  `PATH`; the `e2e` CI job is the real end-to-end run.
+- Cloud sessions have no Docker daemon. The script tests need none; the `e2e` CI job is
+  the real end-to-end run.
+- A change to a script changes its tests in the same commit: a test for each new
+  branch (a sind version switch, an input, an error), with the exact command line or
+  message that it expects.
 
 ## sind compatibility
 
