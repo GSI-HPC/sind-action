@@ -31,6 +31,8 @@ jobs. Personal, uncommitted instructions belong in `CLAUDE.local.md` (gitignored
   tests) and `e2e`, which runs the action from the checkout against the oldest
   supported sind release and `latest`, and against `latest` on an ARM64 runner. On
   `latest` it also checks that `install.sh` rejects a binary with one byte changed.
+  Its actions are pinned to a commit hash, with the version as a comment; Dependabot
+  updates both (`.github/dependabot.yml`).
 
 ## Checks
 
