@@ -12,13 +12,26 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: shellcheck
-        run: shellcheck scripts/*.sh
+        run: shellcheck -x scripts/*.sh tests/*.sh
 
       - name: actionlint
-        uses: rhysd/actionlint@v1.7.12
+        uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
+
+  # The scripts with stubs of sind, curl and gh: every branch of them,
+  # also those that no release of the e2e matrix reaches.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Test create.sh
+        run: tests/create.sh
+
+      - name: Test install.sh
+        run: tests/install.sh
 
   e2e:
     name: e2e (sind ${{ matrix.version }}${{ matrix.runner != 'ubuntu-latest' && format(', {0}', matrix.runner) || '' }})
@@ -38,7 +51,7 @@ jobs:
           - version: latest
             runner: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup sind
         id: sind
