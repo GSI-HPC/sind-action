@@ -7,23 +7,23 @@ description: Drive a sind-action pull request to a mergeable state. Covers local
 
 ## Before every push
 
-1. `shellcheck scripts/*.sh` and `actionlint` are clean.
-2. Script changes: run the script against a stub `sind` on `PATH`, using mikefarah
-   `yq` v4 (`go install github.com/mikefarah/yq/v4@latest`), for every sind version
-   branch the change touches. Example stub for `create.sh`:
+1. `shellcheck -x scripts/*.sh tests/*.sh` and `actionlint` are clean.
+2. `tests/create.sh` and `tests/install.sh` pass, using mikefarah `yq` v4
+   (`go install github.com/mikefarah/yq/v4@latest`). They run the scripts against
+   stubs of `sind`, `curl` and `gh`. For a script change, add or change a test for
+   every sind version branch, input and error message that the change touches, for
+   example in `tests/create.sh`:
 
    ```bash
-   T=$(mktemp -d)
-   cat > "$T/sind" <<'EOF'
-   #!/usr/bin/env bash
-   [[ "$1" == version ]] && { echo '{"version":"0.9.0"}'; exit 0; }
-   echo "sind $*"
-   EOF
-   chmod +x "$T/sind"
-   PATH="$T:$PATH" SIND_VERBOSITY=-v GITHUB_OUTPUT="$T/out" \
-     INPUT_CLUSTERS='- kind: Cluster
-     name: c1
-     nodes: [controller]' bash scripts/create.sh
+   test_wait() {
+     create INPUT_CLUSTERS='- cluster.yml' INPUT_WAIT=10m STUB_SIND_VERSION=0.11.0
+     expect_status 0
+     expect_calls <<'WANT'
+   sind -v create cluster file --config cluster.yml --wait 10m --pull=false
+     config: {"kind":"Cluster","name":"file"}
+   sind -v get cluster file
+   WANT
+   }
    ```
 
 3. Input, output or behaviour changes: update `README.md` (tables and examples) and
@@ -40,6 +40,8 @@ Rebase onto `main`, never merge `main` in:
 ## CI (`.github/workflows/ci.yml`)
 
 - `lint`: shellcheck and actionlint.
+- `test`: the script tests. A failure prints the test, what it expected and the
+  output of the script.
 - `e2e`: runs the action from the checkout (`uses: ./`) for the oldest supported sind
   and `latest`, and for `latest` on `ubuntu-24.04-arm`. It creates a file-based and an
   inline cluster in a realm, checks the outputs, runs `sinfo`/`srun`, and verifies
